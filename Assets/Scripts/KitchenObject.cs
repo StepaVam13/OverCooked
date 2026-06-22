@@ -7,11 +7,9 @@ public class KitchenObject : MonoBehaviour
 
     private void Awake()
     {
-        // Запоминаем масштаб, который вы настроили в префабе
         originalScale = transform.localScale;
     }
 
-    // Метод для принудительного возврата родного масштаба
     public void ResetScale()
     {
         transform.localScale = originalScale;

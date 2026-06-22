@@ -17,15 +17,15 @@ public class StoveCounter : MonoBehaviour, IInteractable
             cookingTimer += Time.deltaTime;
             if (cookingTimer >= activeRecipe.cookingTimeMax)
             {
-                // Приготовилось! Заменяем на суп
-                // Приготовилось! Заменяем на суп
                 Destroy(currentObjectOnTable.gameObject);
 
-                // Спавним объект сразу в позиции tablePoint и делаем tablePoint его родителем
-                GameObject cookedObject = Instantiate(activeRecipe.output.prefab, tablePoint.position, Quaternion.identity, tablePoint);
+                GameObject cookedObject = Instantiate(activeRecipe.output.prefab, tablePoint.position, Quaternion.identity);
                 currentObjectOnTable = cookedObject.GetComponent<KitchenObject>();
-                currentObjectOnTable.transform.localPosition = Vector3.zero;
-                currentObjectOnTable.transform.localRotation = Quaternion.identity;
+                currentObjectOnTable.ResetScale();
+
+                // ОТКЛЮЧАЕМ КОЛЛАЙДЕР готового супа на плите
+                Collider col = cookedObject.GetComponent<Collider>();
+                if (col != null) col.enabled = false;
 
                 isCooking = false;
             }

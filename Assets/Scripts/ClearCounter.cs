@@ -73,10 +73,14 @@ public class ClearCounter : MonoBehaviour, IInteractable
     {
         if (currentObjectOnTable != null) return false;
 
-        // Спавним БЕЗ указания родителя в конце
         GameObject spawnedObject = Instantiate(kitchenObjectSO.prefab, tablePoint.position, Quaternion.identity);
         currentObjectOnTable = spawnedObject.GetComponent<KitchenObject>();
         currentObjectOnTable.ResetScale();
+
+        // ОТКЛЮЧАЕМ КОЛЛАЙДЕР, чтобы предмет на столе не мешал лучу игрока
+        Collider col = spawnedObject.GetComponent<Collider>();
+        if (col != null) col.enabled = false;
+
         return true;
     }
 }
