@@ -73,12 +73,21 @@ public class LevelManager : MonoBehaviour
     private void EndLevel()
     {
         isLevelOver = true;
-        Time.timeScale = 0f; // Замораживаем физику и движение в игре
+        Time.timeScale = 0f; // Замораживаем игру
         endLevelUI.SetActive(true);
 
         if (currentMoney >= targetMoney)
         {
-            endLevelResultText.text = $"ПОБЕДА!\nВы набрали: {currentMoney}$";
+            // Считаем сдачу (всё, что заработано сверх цели)
+            int excessMoney = currentMoney - targetMoney;
+
+            // Сохраняем эти деньги в глобальный кошелек на компьютере
+            int globalMoney = PlayerPrefs.GetInt("GlobalMoney", 0);
+            globalMoney += excessMoney;
+            PlayerPrefs.SetInt("GlobalMoney", globalMoney);
+            PlayerPrefs.Save();
+
+            endLevelResultText.text = $"ПОБЕДА!\nВы набрали: {currentMoney}$\nВ глобальный кошелек добавлено: +{excessMoney}$!";
             endLevelResultText.color = Color.green;
         }
         else

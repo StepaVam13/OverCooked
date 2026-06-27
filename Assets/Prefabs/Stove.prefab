@@ -198,6 +198,8 @@ MonoBehaviour:
   tablePoint: {fileID: 3367469466376398526}
   cookingRecipes:
   - {fileID: 11400000, guid: 0c9c913bba2f308428d735b9762073c9, type: 2}
+  burntFoodSO: {fileID: 11400000, guid: a64ec4588686a734189690f1e427221e, type: 2}
+  burningTimeMax: 10
 --- !u!114 &7557928338960154650
 MonoBehaviour:
   m_ObjectHideFlags: 0

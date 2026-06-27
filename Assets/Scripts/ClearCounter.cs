@@ -83,5 +83,7 @@ public class ClearCounter : MonoBehaviour, IInteractable
 
         return true;
     }
+
+    public KitchenObject GetCurrentObjectOnTable() => currentObjectOnTable;
 }
 

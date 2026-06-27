@@ -60,4 +60,6 @@ public class SinkCounter : MonoBehaviour, IInteractable
             }
         }
     }
+
+    public KitchenObject GetCurrentObjectOnTable() => currentObjectOnTable;
 }

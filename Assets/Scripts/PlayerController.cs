@@ -2,37 +2,66 @@ using UnityEngine;
 
 public class PlayerController : MonoBehaviour
 {
+    [Header("Настройки управления (Клавиши)")]
+    [SerializeField] private KeyCode upKey = KeyCode.W;
+    [SerializeField] private KeyCode downKey = KeyCode.S;
+    [SerializeField] private KeyCode leftKey = KeyCode.A;
+    [SerializeField] private KeyCode rightKey = KeyCode.D;
+    [SerializeField] private KeyCode interactKey = KeyCode.E; // Обычное действие
+    [SerializeField] private KeyCode chopKey = KeyCode.F;     // Нарезка
+    [SerializeField] private KeyCode throwKey = KeyCode.Space; // Бросок
+
     [Header("Настройки броска продуктов")]
-    [SerializeField] private float throwForce = 12f;       // Сила броска вперед
-    [SerializeField] private float throwUpwardForce = 4f;  // Сила броска вверх (для навеса)
+    [SerializeField] private float throwForce = 12f;
+    [SerializeField] private float throwUpwardForce = 4f;
+
     [Header("Настройки гироскутера (Инерция)")]
-    [SerializeField] private float acceleration = 5f; // Скорость разгона (чем меньше, тем дольше разгоняется)
-    [SerializeField] private float deceleration = 3f; // Скорость торможения/инерция (чем меньше, тем дольше скользит)
+    [SerializeField] private float acceleration = 5f;
+    [SerializeField] private float deceleration = 3f;
     [SerializeField] private float moveSpeed = 7f;
     [SerializeField] private float rotateSpeed = 10f;
     [SerializeField] private LayerMask countersLayerMask;
-    [SerializeField] private Transform handPoint; // Точка крепления предмета в руках
+    [SerializeField] private Transform handPoint;
+
+    [HideInInspector] public bool isMovementFrozen = false;
+
+    [Header("Настройки 3D магазина")]
+    [SerializeField] private Transform gyroScooterContainer; // Объект "GyroScooter", внутри которого лежат 3D модели разных гироскутеров
 
     private Rigidbody rb;
     private Vector3 moveInput;
     private Vector3 lastMoveDir;
-    private IInteractable lastSelectedCounter;
     private IInteractable selectedCounter;
-    private KitchenObject holdingObject; // Предмет, который сейчас в руках
+    private IInteractable lastSelectedCounter;
+    private KitchenObject holdingObject;
 
+    [SerializeField] private bool isPlayer2 = false; // Поставьте галочку только у Второго Игрока!
 
     private void Start()
     {
         rb = GetComponent<Rigidbody>();
+        LoadKeybinds();
+        LoadUpgrades(); // <--- ДОБАВЬТЕ ЭТУ СТРОКУ!
+
+        if (isPlayer2)
+        {
+            bool isCoopMode = PlayerPrefs.GetInt("IsCoop", 0) == 1;
+            if (!isCoopMode)
+            {
+                gameObject.SetActive(false);
+            }
+        }
     }
 
     private void Update()
     {
+        if (isMovementFrozen) return;
+
         HandleInput();
         HandleInteractions();
 
-        // Если нажат Пробел — бросаем предмет из рук
-        if (Input.GetKeyDown(KeyCode.Space))
+        // Кнопка броска продуктов
+        if (Input.GetKeyDown(throwKey))
         {
             ThrowItem();
         }
@@ -40,7 +69,12 @@ public class PlayerController : MonoBehaviour
 
     private void FixedUpdate()
     {
-        // 1. Физика разгона и торможения (инерция)
+        if (isMovementFrozen)
+        {
+            rb.velocity = Vector3.zero;
+            return;
+        }
+
         Vector3 targetVelocity = moveInput * moveSpeed;
 
         if (moveInput != Vector3.zero)
@@ -52,25 +86,26 @@ public class PlayerController : MonoBehaviour
             rb.velocity = Vector3.Lerp(rb.velocity, Vector3.zero, deceleration * Time.fixedDeltaTime);
         }
 
-        // 2. Плавный поворот в сторону РЕАЛЬНОГО физического движения (вектора скорости)
         Vector3 movementDirection = rb.velocity;
-        movementDirection.y = 0f; // Игнорируем высоту, поворачиваем только по горизонтали
+        movementDirection.y = 0f;
 
-        // Если персонаж физически движется (скорость больше минимальной)
         if (movementDirection.magnitude > 0.1f)
         {
-            // Вычисляем направление взгляда в сторону физического движения
             Quaternion targetRotation = Quaternion.LookRotation(movementDirection.normalized, Vector3.up);
-
-            // Плавное сглаживание поворота (Slerp)
             transform.rotation = Quaternion.Slerp(transform.rotation, targetRotation, rotateSpeed * Time.fixedDeltaTime);
         }
     }
 
     private void HandleInput()
     {
-        float moveX = Input.GetAxisRaw("Horizontal");
-        float moveZ = Input.GetAxisRaw("Vertical");
+        // Считываем движение по настроенным в инспекторе кнопкам
+        float moveX = 0f;
+        float moveZ = 0f;
+
+        if (Input.GetKey(upKey)) moveZ = 1f;
+        if (Input.GetKey(downKey)) moveZ = -1f;
+        if (Input.GetKey(leftKey)) moveX = -1f;
+        if (Input.GetKey(rightKey)) moveX = 1f;
 
         moveInput = new Vector3(moveX, 0f, moveZ).normalized;
 
@@ -79,23 +114,21 @@ public class PlayerController : MonoBehaviour
             lastMoveDir = moveInput;
         }
 
-        // Кнопка обычного взаимодействия (E) — теперь ОДНА чистая проверка!
-        if (Input.GetKeyDown(KeyCode.E))
+        // Кнопка обычного взаимодействия (Брать / Класть)
+        if (Input.GetKeyDown(interactKey))
         {
             if (selectedCounter != null)
             {
-                // Если перед глазами есть стол — работаем со столом
                 selectedCounter.Interact(this);
             }
             else
             {
-                // Если стола перед глазами нет — пробуем подобрать лежащий рядом на полу предмет!
                 TryProximityPickup();
             }
         }
 
-        // Кнопка альтернативного взаимодействия (F)
-        if (Input.GetKeyDown(KeyCode.F))
+        // Кнопка альтернативного взаимодействия (Нарезка / Готовка)
+        if (Input.GetKeyDown(chopKey))
         {
             if (selectedCounter != null)
             {
@@ -108,7 +141,6 @@ public class PlayerController : MonoBehaviour
     {
         float interactDistance = 1.5f;
 
-        // Проверяем наличие стола перед собой с помощью Raycast (используем правильную переменную lastMoveDir)
         if (Physics.Raycast(transform.position, lastMoveDir, out RaycastHit raycastHit, interactDistance, countersLayerMask))
         {
             if (raycastHit.transform.TryGetComponent(out IInteractable interactable))
@@ -125,10 +157,8 @@ public class PlayerController : MonoBehaviour
             selectedCounter = null;
         }
 
-        // --- ЛОГИКА АВТОМАТИЧЕСКОЙ ПОДСВЕТКИ ---
         if (selectedCounter != lastSelectedCounter)
         {
-            // 1. Гасим подсветку на старом столе
             if (lastSelectedCounter != null)
             {
                 MonoBehaviour oldCounterObj = lastSelectedCounter as MonoBehaviour;
@@ -138,7 +168,6 @@ public class PlayerController : MonoBehaviour
                 }
             }
 
-            // 2. Зажигаем подсветку на новом столе
             if (selectedCounter != null)
             {
                 MonoBehaviour newCounterObj = selectedCounter as MonoBehaviour;
@@ -148,12 +177,10 @@ public class PlayerController : MonoBehaviour
                 }
             }
 
-            // Запоминаем текущий стол как прошлый
             lastSelectedCounter = selectedCounter;
         }
     }
 
-    // Методы для работы с удерживаемым предметом
     public bool HasKitchenObject() => holdingObject != null;
 
     public KitchenObject GetKitchenObject() => holdingObject;
@@ -168,18 +195,14 @@ public class PlayerController : MonoBehaviour
             newObject.transform.localRotation = Quaternion.identity;
             newObject.ResetScale();
 
-            // Возвращаем предмет на стандартный слой Default
             newObject.gameObject.layer = LayerMask.NameToLayer("Default");
 
-            // БРОНЕБОЙНОЕ РЕШЕНИЕ: Отключаем коллайдеры у самого объекта И ВСЕХ его дочерних элементов,
-            // чтобы они физически не могли заблокировать луч игрока из рук!
             Collider[] colliders = newObject.GetComponentsInChildren<Collider>();
             foreach (Collider col in colliders)
             {
                 col.enabled = false;
             }
 
-            // Отключаем физику у всех Rigidbody в объекте и его детях
             Rigidbody[] rbs = newObject.GetComponentsInChildren<Rigidbody>();
             foreach (Rigidbody rb in rbs)
             {
@@ -211,10 +234,8 @@ public class PlayerController : MonoBehaviour
             }
             itemRb.isKinematic = false;
 
-            // --- ФИЗИКА ТРЕНИЯ (чтобы предмет не катился вечно) ---
-            // --- ФИЗИКА ТРЕНИЯ (корректируем значения) ---
-            itemRb.drag = 0.5f;        // Было 3f. Снижаем до 0.5f, чтобы предмет падал быстро и тяжело!
-            itemRb.angularDrag = 10f;   // Оставляем высоким (даже увеличиваем до 10), чтобы он сразу перестал катиться при приземлении // Быстро останавливает вращение (качение сферы)
+            itemRb.drag = 0.5f;
+            itemRb.angularDrag = 10f;
 
             Collider itemCollider = item.GetComponent<Collider>();
             if (itemCollider != null)
@@ -223,8 +244,6 @@ public class PlayerController : MonoBehaviour
                 itemCollider.isTrigger = false;
             }
 
-            // --- ТРЮК СО СЛОЕМ (чтобы пол не мешал подбирать) ---
-            // Временно переводим летящий предмет на слой Counters, чтобы луч игрока видел только его
             item.gameObject.layer = LayerMask.NameToLayer("Counters");
 
             Vector3 forceDirection = transform.forward * throwForce + Vector3.up * throwUpwardForce;
@@ -245,18 +264,64 @@ public class PlayerController : MonoBehaviour
             KitchenObject kitchenObject = col.GetComponent<KitchenObject>();
             if (kitchenObject != null)
             {
-                // ПОДБОР: Отключаем физику и коллайдер прямо здесь
                 Rigidbody rb = kitchenObject.GetComponent<Rigidbody>();
                 if (rb != null) rb.isKinematic = true;
 
                 Collider collider = kitchenObject.GetComponent<Collider>();
                 if (collider != null) collider.enabled = false;
 
-                // Даем предмет в руки игроку
                 SetKitchenObject(kitchenObject);
                 Debug.Log($"Подобрали {kitchenObject.GetKitchenObjectSO().objectName} с пола по близости!");
                 break;
             }
+        }
+    }
+
+    public void LoadKeybinds()
+    {
+        // Определяем префикс настроек в зависимости от имени объекта игрока на сцене ("Player1" или "Player2")
+        string prefix = gameObject.name == "Player1" ? "P1_" : "P2_";
+
+        // Считываем клавиши из памяти. Если они еще не были переназначены — используем дефолтные кнопки из инспектора
+        upKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Up", (int)upKey);
+        downKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Down", (int)downKey);
+        leftKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Left", (int)leftKey);
+        rightKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Right", (int)rightKey);
+        interactKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Interact", (int)interactKey);
+        chopKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Chop", (int)chopKey);
+        throwKey = (KeyCode)PlayerPrefs.GetInt(prefix + "Throw", (int)throwKey);
+    }
+
+    public void LoadUpgrades()
+    {
+        // Считываем, какой гироскутер сейчас экипирован в магазине
+        string equippedBoard = PlayerPrefs.GetString("EquippedBoard", "Default");
+
+        // 1. АКТИВИРУЕМ ТОЛЬКО КУПЛЕННУЮ МОДЕЛЬ под ногами у игрока!
+        if (gyroScooterContainer != null)
+        {
+            foreach (Transform child in gyroScooterContainer)
+            {
+                // Если имя 3D-модели совпадает с ID экипированного гироскутера — включаем её, остальные гасим
+                child.gameObject.SetActive(child.name == equippedBoard);
+            }
+        }
+
+        // 2. УСТАНАВЛИВАЕМ ХАРАКТЕРИСТИКИ ЭТОГО ГИРОСКУТЕРА
+        if (equippedBoard == "Default")
+        {
+            moveSpeed = 7f;
+            acceleration = 5f;
+        }
+        else if (equippedBoard == "Speedster")
+        {
+            moveSpeed = 10f; // Быстрый!
+            acceleration = 6f;
+        }
+        else if (equippedBoard == "Drifter")
+        {
+            moveSpeed = 8.5f;
+            acceleration = 9f; // С заносом и невероятно резвым стартом!
         }
     }
 }

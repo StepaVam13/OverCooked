@@ -83,4 +83,6 @@ public class CuttingCounter : MonoBehaviour, IInteractable
         }
         return null;
     }
+
+    public KitchenObject GetCurrentObjectOnTable() => currentObjectOnTable;
 }
