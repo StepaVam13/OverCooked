@@ -7,34 +7,50 @@ public class TutorialManager : MonoBehaviour
 {
     public enum TutorialStep
     {
-        GrabTomato,
-        GoToCuttingBoard,
-        ChopTomato,
-        TakeChoppedTomato,
-        GoToStove,
-        WaitForCook,
-        GrabPotato,
-        SlicePotato,
-        FryFries,
-        GrabDirtyPlate,
-        WashPlate,
-        PlateFood,
-        Deliver,
+        GrabDirtyPlate1,         // 1. Берем первую грязную тарелку
+        PutInSink1,              // 2. Кладем в раковину
+        WashPlate1,              // 3. Моем её
+        TakeCleanPlate1,         // 4. Забираем чистую тарелку в руки
+        PlacePlate1,             // 5. Кладем чистую тарелку на стол ожидания
+        GrabTomato,              // 6. Берем помидор
+        GoToCuttingBoard,        // 7. Относим помидор на доску (ВОЗВРАТИЛИ ЭТОТ ШАГ)
+        ChopTomato,              // 8. Нарезаем помидор на доске
+        TakeChoppedTomato,       // 9. Забираем нарезанный помидор
+        GoToStove,               // 10. Кладем вариться суп
+        WaitForCook,             // 11. Ждем готовности супа
+        TakePlateForSoup,        // 12. Забираем тарелку со стола ожидания
+        PlateSoup,               // 13. Наливаем суп в тарелку (спасаем от сгорания)
+        DeliverSoup,             // 14. Относим суп на выдачу
+
+        GrabDirtyPlate2,         // 15. Берем вторую грязную тарелку
+        PutInSink2,              // 16. Кладем в раковину
+        WashPlate2,              // 17. Моем её
+        TakeCleanPlate2,         // 18. Забираем чистую в руки
+        PlacePlate2,             // 19. Кладем чистую тарелку на стол ожидания
+        GrabPotato,              // 20. Берем картошку
+        ChopPotato,              // 21. Нарезаем картошку на доске
+        TakeChoppedPotato,       // 22. Забираем нарезанную картошку
+        GoToPan,                 // 23. Ставим жариться на сковороду
+        WaitForFries,            // 24. Ждем готовности картофеля фри
+        TakePlateForFries,       // 25. Забираем чистую тарелку со стола ожидания
+        PlateFries,              // 26. Накладываем картофель фри в тарелку
+        DeliverFries,            // 27. Относим картошку на выдачу
         Complete
     }
 
     [Header("Игрок")]
     [SerializeField] private PlayerController player;
 
-    [Header("Столы (Подсветка)")]
-    [SerializeField] private InteractableHighlight tomatoContainer;
-    [SerializeField] private InteractableHighlight potatoContainer;
-    [SerializeField] private InteractableHighlight cuttingBoard;
-    [SerializeField] private InteractableHighlight stove;
-    [SerializeField] private InteractableHighlight pan;
-    [SerializeField] private InteractableHighlight dirtyPlatesStack;
-    [SerializeField] private InteractableHighlight sink;
-    [SerializeField] private InteractableHighlight deliveryTable;
+    [Header("Столы на сцене")]
+    [SerializeField] private PlateStackCounter dirtyPlateTable; // Стопка грязных тарелок
+    [SerializeField] private SinkCounter sink;              // Раковина
+    [SerializeField] private ClearCounter helperTable;      // Стол ожидания чистой тарелки
+    [SerializeField] private ContainerCounter tomatoContainer; // Коробка помидоров
+    [SerializeField] private ContainerCounter potatoContainer; // Коробка картофеля
+    [SerializeField] private CuttingCounter cuttingBoard;   // Разделочный стол
+    [SerializeField] private StoveCounter stove;            // Плита для супа
+    [SerializeField] private StoveCounter pan;              // Плита/сковорода для картофеля фри
+    [SerializeField] private DeliveryCounter deliveryTable;  // Сдача
 
     [Header("UI Обучения")]
     [SerializeField] private GameObject tutorialPanel;
@@ -57,12 +73,11 @@ public class TutorialManager : MonoBehaviour
     private void Start()
     {
         Time.timeScale = 1f;
-        SetStep(TutorialStep.GrabTomato);
+        SetStep(TutorialStep.GrabDirtyPlate1); // Начинаем с посуды!
     }
 
     private void Update()
     {
-        // Изменили считывание клавиши со Space на Q!
         if (isWaitingForContinue)
         {
             if (Input.GetKeyDown(KeyCode.Q))
@@ -89,83 +104,156 @@ public class TutorialManager : MonoBehaviour
         isWaitingForContinue = true;
         player.isMovementFrozen = true;
         tutorialPanel.SetActive(true);
-        actionPromptText.text = "Нажми Q, чтобы начать выполнять"; // <--- Текст обновлен под Q
+        actionPromptText.text = "Нажми Q, чтобы начать выполнять";
 
         // Гасим все подсветки
-        tomatoContainer.SetSelected(false);
-        if (potatoContainer != null) potatoContainer.SetSelected(false);
-        cuttingBoard.SetSelected(false);
-        stove.SetSelected(false);
-        if (pan != null) pan.SetSelected(false);
-        if (dirtyPlatesStack != null) dirtyPlatesStack.SetSelected(false);
-        if (sink != null) sink.SetSelected(false);
-        deliveryTable.SetSelected(false);
+        if (dirtyPlateTable != null) dirtyPlateTable.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (helperTable != null) helperTable.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (tomatoContainer != null) tomatoContainer.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (potatoContainer != null) potatoContainer.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (deliveryTable != null) deliveryTable.GetComponent<InteractableHighlight>().SetSelected(false);
 
         switch (step)
         {
+            // --- ЭТАП СУПА ---
+            case TutorialStep.GrabDirtyPlate1:
+                tutorialText.text = "Добро пожаловать на кухню!\n\nПервое правило шефа: готовь посуду ДО того, как еда сварится, иначе всё сгорит!\n\nПодойди к столу грязной посуды и возьми ПЕРВУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
+                if (dirtyPlateTable != null) dirtyPlateTable.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.PutInSink1:
+                tutorialText.text = "Отнеси её в РАКОВИНУ и положи внутрь на кнопку [E].";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.WashPlate1:
+                tutorialText.text = "Помой тарелку! Нажимай клавишу [F] несколько раз, пока она не отмоется.";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.TakeCleanPlate1:
+                tutorialText.text = "Отлично! Забери чистую тарелку из раковины на кнопку [E].";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.PlacePlate1:
+                tutorialText.text = "Тарелка готова!\n\nПоложи чистую тарелку на свободный СТОЛ ОЖИДАНИЯ на кнопку [E], чтобы освободить руки.";
+                if (helperTable != null) helperTable.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
             case TutorialStep.GrabTomato:
-                tutorialText.text = "Добро пожаловать на кухню!\n\nПодойди к ЯЩИКУ С ПОМИДОРАМИ (подсвечен желтым) и нажми E, чтобы взять помидор.";
-                tomatoContainer.SetSelected(true);
+                tutorialText.text = "Посуда готова. Теперь займемся супом.\n\nПодойди к ЯЩИКУ С ПОМИДОРАМИ и возьми один на кнопку [E].";
+                if (tomatoContainer != null) tomatoContainer.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.GoToCuttingBoard:
-                tutorialText.text = "Отлично, помидор в руках!\n\nТеперь отнеси его на РАЗДЕЛOЧНУЮ ДОСКУ и нажми E, чтобы положить.";
-                cuttingBoard.SetSelected(true);
+                tutorialText.text = "Отнеси сырой поридор к РАЗДЕЛOЧНОМУ СТОЛУ и нажми [E].";
+                if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.ChopTomato:
-                tutorialText.text = "Помидор на доске.\n\nНажимай клавишу F несколько раз, чтобы нарезать его.";
-                cuttingBoard.SetSelected(true);
+                tutorialText.text = "Нажимай клавишу [F] несколько раз, чтобы нарезать помидор.";
+                if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.TakeChoppedTomato:
-                tutorialText.text = "Помидор нарезан!\n\nНажми E, чтобы забрать нарезанный помидор в руки.";
-                cuttingBoard.SetSelected(true);
+                tutorialText.text = "Забери нарезку в руки на кнопку [E].";
+                if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.GoToStove:
-                tutorialText.text = "Теперь несем нарезку вариться.\n\nПодойди к ПЛИТЕ С КАСТРЮЛЕЙ и нажми E, чтобы положить помидор.";
-                stove.SetSelected(true);
+                tutorialText.text = "Положи нарезанный помидор на ПЛИТУ С КАСТРЮЛЕЙ вариться на кнопку [E].";
+                if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.WaitForCook:
-                tutorialText.text = "Суп варится автоматически.\n\nПока он готовится, давай займемся картофелем фри!";
-                stove.SetSelected(true);
+                tutorialText.text = "Суп варится автоматически.\n\nВнимание: когда он сварится, у тебя будет всего 8 секунд до того, как он СГОРИТ! Ждем готовности...";
+                if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.TakePlateForSoup:
+                tutorialText.text = "СУП ГОТОВ! Быстро!\n\nЗабери чистую тарелку со стола ожидания в руки на кнопку [E].";
+                if (helperTable != null) helperTable.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.PlateSoup:
+                tutorialText.text = "А теперь быстро подойди к плите и нажми [E], чтобы налить суп в тарелку, пока он не сгорел!";
+                if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.DeliverSoup:
+                tutorialText.text = "Успех, суп спасен!\n\nОтнеси готовую порцию супа на СТОЛ ВЫДАЧИ и сдай заказ на кнопку [E].";
+                if (deliveryTable != null) deliveryTable.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            // --- ЭТАП КАРТОШКИ ---
+            case TutorialStep.GrabDirtyPlate2:
+                tutorialText.text = "Первое блюдо сдано! Теперь приготовим картошель фри.\n\nПоскольку чистых тарелок снова нет, подойди к столу грязной посуды и возьми ВТОРУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
+                if (dirtyPlateTable != null) dirtyPlateTable.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.PutInSink2:
+                tutorialText.text = "Снова отнеси её в РАКОВИНУ и положи внутрь на кнопку [E].";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.WashPlate2:
+                tutorialText.text = "Помой тарелку! Нажимай клавишу [F] несколько раз, пока она не отмоется.";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.TakeCleanPlate2:
+                tutorialText.text = "Отлично! Забери чистую тарелку из раковины на кнопку [E].";
+                if (sink != null) sink.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.PlacePlate2:
+                tutorialText.text = "Положи чистую тарелку на свободный СТОЛ ОЖИДАНИЯ на кнопку [E], чтобы освободить руки.";
+                if (helperTable != null) helperTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.GrabPotato:
-                tutorialText.text = "Подойди к КОРОБКЕ С КАРТОФЕЛЕМ и нажми E, чтобы взять одну картофелину.";
-                if (potatoContainer != null) potatoContainer.SetSelected(true);
+                tutorialText.text = "Посуда готова. Теперь займемся картошкой фри!\n\nПодойди к КОРОВКЕ С КАРТОФЕЛЕМ и возьми одну на [E].";
+                if (potatoContainer != null) potatoContainer.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.SlicePotato:
-                tutorialText.text = "Картошку тоже нужно нарезать.\n\nОтнеси её на РАЗДЕЛOЧНУЮ ДОСКУ, нажми E (положить) и нарежь на F.";
-                cuttingBoard.SetSelected(true);
+            case TutorialStep.ChopPotato:
+                tutorialText.text = "Отнеси сырую картошку на РАЗДЕЛOЧНУЮ ДОСКУ, нажми [E] и нарежь её на [F].";
+                if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.FryFries:
-                tutorialText.text = "Теперь пожарим картофель фри.\n\nЗабери нарезанную картошку с доски, отнеси к СКОВОРОДКЕ и нажми E для жарки. Подожди, пока она пожарится.";
-                if (pan != null) pan.SetSelected(true);
+            case TutorialStep.TakeChoppedPotato:
+                tutorialText.text = "Забери нарезанную картошку в руки на кнопку [E].";
+                if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.GrabDirtyPlate:
-                tutorialText.text = "Картофель фри и суп готовы! Но у нас закончились чистые тарелки.\n\nПодойди к СТОЛУ С ГРЯЗНОЙ ПОСУДОЙ и нажми E, чтобы взять одну грязную тарелку.";
-                if (dirtyPlatesStack != null) dirtyPlatesStack.SetSelected(true);
+            case TutorialStep.GoToPan:
+                tutorialText.text = "Положи нарезанный картофель к СКОЛОВОРОДКЕ вариться на кнопку [E].";
+                if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.WashPlate:
-                tutorialText.text = "Тарелка грязная, в неё нельзя класть еду.\n\nОтнеси её в РАКОВИНУ, нажми E (положить) и зажимай/нажимай F, чтобы отмыть её.";
-                if (sink != null) sink.SetSelected(true);
+            case TutorialStep.WaitForFries:
+                tutorialText.text = "Картошель фри жарится автоматически.\n\nВнимание: у тебя снова будет всего 8 секунд до того, как картошка СГОРИТ на сковороде! Ждем готовности...";
+                if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.PlateFood:
-                tutorialText.text = "Отлично, теперь у тебя в руках чистая тарелка!\n\nПодойди к плите с готовым супом (или к сковородке) и нажми E, чтобы положить еду в тарелку.";
-                stove.SetSelected(true);
+            case TutorialStep.TakePlateForFries:
+                tutorialText.text = "КАРТОШКА ПОЖАРИЛАСЬ! Быстро!\n\nЗабери чистую тарелку со стола ожидания в руки на кнопку [E].";
+                if (helperTable != null) helperTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
-            case TutorialStep.Deliver:
-                tutorialText.text = "Блюдо в тарелке!\n\nОтнеси готовое блюдо на СТОЛ ВЫДАЧИ ЗАКАЗОВ и нажми E.";
-                deliveryTable.SetSelected(true);
+            case TutorialStep.PlateFries:
+                tutorialText.text = "А теперь быстро подойди к сковороде и нажми [E], чтобы положить картошель фри в тарелку, пока он не сгорел!";
+                if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
+            case TutorialStep.DeliverFries:
+                tutorialText.text = "Успех, картошка спасена!\n\nОтнеси тарелку на СТОЛ ВЫДАЧИ и сдай её на кнопку [E].";
+                if (deliveryTable != null) deliveryTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
         }
     }
@@ -181,6 +269,42 @@ public class TutorialManager : MonoBehaviour
     {
         switch (currentStep)
         {
+            // --- ЭТАП СУПА ---
+            case TutorialStep.GrabDirtyPlate1:
+                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == dirtyPlateSO)
+                {
+                    SetStep(TutorialStep.PutInSink1);
+                }
+                break;
+
+            case TutorialStep.PutInSink1:
+                if (!player.HasKitchenObject() && FindItemOnCounter(sink.GetComponent<InteractableHighlight>()) == dirtyPlateSO)
+                {
+                    SetStep(TutorialStep.WashPlate1);
+                }
+                break;
+
+            case TutorialStep.WashPlate1:
+                if (FindItemOnCounter(sink.GetComponent<InteractableHighlight>()) == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.TakeCleanPlate1);
+                }
+                break;
+
+            case TutorialStep.TakeCleanPlate1:
+                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.PlacePlate1);
+                }
+                break;
+
+            case TutorialStep.PlacePlate1:
+                if (!player.HasKitchenObject() && FindItemOnCounter(helperTable.GetComponent<InteractableHighlight>()) == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.GrabTomato);
+                }
+                break;
+
             case TutorialStep.GrabTomato:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == tomatoRawSO)
                 {
@@ -189,14 +313,14 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GoToCuttingBoard:
-                if (!player.HasKitchenObject() && FindItemOnCounter(cuttingBoard) == tomatoRawSO)
+                if (!player.HasKitchenObject() && FindItemOnCounter(cuttingBoard.GetComponent<InteractableHighlight>()) == tomatoRawSO)
                 {
                     SetStep(TutorialStep.ChopTomato);
                 }
                 break;
 
             case TutorialStep.ChopTomato:
-                if (FindItemOnCounter(cuttingBoard) == tomatoChoppedSO)
+                if (FindItemOnCounter(cuttingBoard.GetComponent<InteractableHighlight>()) == tomatoChoppedSO)
                 {
                     SetStep(TutorialStep.TakeChoppedTomato);
                 }
@@ -210,14 +334,75 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GoToStove:
-                if (!player.HasKitchenObject() && FindItemOnCounter(stove) == tomatoChoppedSO)
+                if (!player.HasKitchenObject() && FindItemOnCounter(stove.GetComponent<InteractableHighlight>()) == tomatoChoppedSO)
                 {
                     SetStep(TutorialStep.WaitForCook);
                 }
                 break;
 
             case TutorialStep.WaitForCook:
-                if (FindItemOnCounter(stove) == tomatoSoupSO)
+                if (FindItemOnCounter(stove.GetComponent<InteractableHighlight>()) == tomatoSoupSO)
+                {
+                    SetStep(TutorialStep.TakePlateForSoup);
+                }
+                break;
+
+            case TutorialStep.TakePlateForSoup:
+                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.PlateSoup);
+                }
+                break;
+
+            case TutorialStep.PlateSoup:
+                if (player.HasKitchenObject() && player.GetKitchenObject() is PlateKitchenObject)
+                {
+                    PlateKitchenObject plate = player.GetKitchenObject() as PlateKitchenObject;
+                    if (plate.GetIngredients().Contains(tomatoSoupSO))
+                    {
+                        SetStep(TutorialStep.DeliverSoup);
+                    }
+                }
+                break;
+
+            case TutorialStep.DeliverSoup:
+                if (!player.HasKitchenObject())
+                {
+                    SetStep(TutorialStep.GrabDirtyPlate2); // Переходим ко второму этапу (картошка)
+                }
+                break;
+
+            // --- ЭТАП КАРТОШКИ ---
+            case TutorialStep.GrabDirtyPlate2:
+                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == dirtyPlateSO)
+                {
+                    SetStep(TutorialStep.PutInSink2);
+                }
+                break;
+
+            case TutorialStep.PutInSink2:
+                if (!player.HasKitchenObject() && FindItemOnCounter(sink.GetComponent<InteractableHighlight>()) == dirtyPlateSO)
+                {
+                    SetStep(TutorialStep.WashPlate2);
+                }
+                break;
+
+            case TutorialStep.WashPlate2:
+                if (FindItemOnCounter(sink.GetComponent<InteractableHighlight>()) == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.TakeCleanPlate2);
+                }
+                break;
+
+            case TutorialStep.TakeCleanPlate2:
+                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == cleanPlateSO)
+                {
+                    SetStep(TutorialStep.PlacePlate2);
+                }
+                break;
+
+            case TutorialStep.PlacePlate2:
+                if (!player.HasKitchenObject() && FindItemOnCounter(helperTable.GetComponent<InteractableHighlight>()) == cleanPlateSO)
                 {
                     SetStep(TutorialStep.GrabPotato);
                 }
@@ -226,50 +411,57 @@ public class TutorialManager : MonoBehaviour
             case TutorialStep.GrabPotato:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == potatoRawSO)
                 {
-                    SetStep(TutorialStep.SlicePotato);
+                    SetStep(TutorialStep.GoToCuttingBoard); // Используем правильный шаг
                 }
                 break;
 
-            case TutorialStep.SlicePotato:
+            case TutorialStep.ChopPotato:
+                if (FindItemOnCounter(cuttingBoard.GetComponent<InteractableHighlight>()) == potatoChoppedSO)
+                {
+                    SetStep(TutorialStep.TakeChoppedPotato);
+                }
+                break;
+
+            case TutorialStep.TakeChoppedPotato:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == potatoChoppedSO)
                 {
-                    SetStep(TutorialStep.FryFries);
+                    SetStep(TutorialStep.GoToPan);
                 }
                 break;
 
-            case TutorialStep.FryFries:
-                if (FindItemOnCounter(pan) == friesSO)
+            case TutorialStep.GoToPan:
+                if (!player.HasKitchenObject() && FindItemOnCounter(pan.GetComponent<InteractableHighlight>()) == potatoChoppedSO)
                 {
-                    SetStep(TutorialStep.GrabDirtyPlate);
+                    SetStep(TutorialStep.WaitForFries);
                 }
                 break;
 
-            case TutorialStep.GrabDirtyPlate:
-                if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == dirtyPlateSO)
+            case TutorialStep.WaitForFries:
+                if (FindItemOnCounter(pan.GetComponent<InteractableHighlight>()) == friesSO)
                 {
-                    SetStep(TutorialStep.WashPlate);
+                    SetStep(TutorialStep.TakePlateForFries);
                 }
                 break;
 
-            case TutorialStep.WashPlate:
+            case TutorialStep.TakePlateForFries:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == cleanPlateSO)
                 {
-                    SetStep(TutorialStep.PlateFood);
+                    SetStep(TutorialStep.PlateFries);
                 }
                 break;
 
-            case TutorialStep.PlateFood:
+            case TutorialStep.PlateFries:
                 if (player.HasKitchenObject() && player.GetKitchenObject() is PlateKitchenObject)
                 {
                     PlateKitchenObject plate = player.GetKitchenObject() as PlateKitchenObject;
-                    if (plate.GetIngredients().Contains(tomatoSoupSO) || plate.GetIngredients().Contains(friesSO))
+                    if (plate.GetIngredients().Contains(friesSO))
                     {
-                        SetStep(TutorialStep.Deliver);
+                        SetStep(TutorialStep.DeliverFries);
                     }
                 }
                 break;
 
-            case TutorialStep.Deliver:
+            case TutorialStep.DeliverFries:
                 if (!player.HasKitchenObject())
                 {
                     CompleteTutorial();
@@ -297,6 +489,11 @@ public class TutorialManager : MonoBehaviour
             KitchenObject obj = stoveCounter.GetCurrentObjectOnTable();
             if (obj != null) return obj.GetKitchenObjectSO();
         }
+        else if (counterHighlight.TryGetComponent(out SinkCounter sinkCounter))
+        {
+            KitchenObject obj = sinkCounter.GetCurrentObjectOnTable();
+            if (obj != null) return obj.GetKitchenObjectSO();
+        }
         return null;
     }
 
@@ -306,7 +503,7 @@ public class TutorialManager : MonoBehaviour
         isWaitingForContinue = true;
         player.isMovementFrozen = true;
         tutorialPanel.SetActive(true);
-        tutorialText.text = "ПОЗДРАВЛЯЕМ!\n\nТы успешно завершил обучение. Ты умеешь готовить суп, жарить картофель фри и мыть грязную посуду в раковине!\n\nНажми Q для возврата в главное меню."; // <--- Текст обновлен под Q
-        actionPromptText.text = "Нажми Q для выхода"; // <--- Текст обновлен под Q
+        tutorialText.text = "ПОЗДРАВЛЯЕМ!\n\nТы успешно завершил обучение. Ты освоил все тонкости работы на кухне: от мытья грязной посуды до приготовления и сдачи супа и картофеля фри!\n\nНажми Q для возврата в главное меню.";
+        actionPromptText.text = "Нажми Q для выхода";
     }
 }

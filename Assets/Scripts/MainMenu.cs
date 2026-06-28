@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using UnityEngine.UI;
 
 public class MainMenu : MonoBehaviour
 {
@@ -7,6 +8,8 @@ public class MainMenu : MonoBehaviour
     [SerializeField] private GameObject mainPanel;      // Кнопки Играть/Настройки/Выход
     [SerializeField] private GameObject settingsPanel;  // Панель настроек кнопок
     [SerializeField] private GameObject gameModePanel;  // Панель выбора режима (Соло/Кооп)
+    [Header("Отображение баланса")]
+    [SerializeField] private Text globalMoneyText; // Текст баланса на главном экране
 
     private void Start()
     {
@@ -14,6 +17,9 @@ public class MainMenu : MonoBehaviour
         if (settingsPanel != null) settingsPanel.SetActive(false);
         if (gameModePanel != null) gameModePanel.SetActive(false);
         if (mainPanel != null) mainPanel.SetActive(true);
+
+        // ОБНОВЛЯЕМ БАЛАНС ПРИ СТАРТЕ МЕНЮ
+        UpdateGlobalMoneyText();
     }
 
     // Открыть выбор режима (Один / Вдвоем)
@@ -62,5 +68,23 @@ public class MainMenu : MonoBehaviour
     {
         if (mainPanel != null) mainPanel.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
+    }
+
+    // Метод для открытия 3D-магазина
+    public void OpenShopScene()
+    {
+        Time.timeScale = 1f; // На всякий случай сбрасываем паузу
+
+        // Загружаем сцену магазина по её точному названию в Unity
+        SceneManager.LoadScene("Shop3DScene");
+    }
+
+    public void UpdateGlobalMoneyText()
+    {
+        if (globalMoneyText != null)
+        {
+            int globalMoney = PlayerPrefs.GetInt("GlobalMoney", 0);
+            globalMoneyText.text = $"БАЛАНС: {globalMoney}$";
+        }
     }
 }
