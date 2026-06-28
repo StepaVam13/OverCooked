@@ -5871,7 +5871,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 5c7d3e78f1d34d944a65e368a3280802, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  levelTimeMax: 10
+  levelTimeMax: 100
   targetMoney: 700
   timerText: {fileID: 189844636}
   moneyText: {fileID: 183255108}
