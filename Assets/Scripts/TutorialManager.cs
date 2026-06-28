@@ -13,7 +13,7 @@ public class TutorialManager : MonoBehaviour
         TakeCleanPlate1,         // 4. Забираем чистую тарелку в руки
         PlacePlate1,             // 5. Кладем чистую тарелку на стол ожидания
         GrabTomato,              // 6. Берем помидор
-        GoToCuttingBoard,        // 7. Относим помидор на доску (ВОЗВРАТИЛИ ЭТОТ ШАГ)
+        GoToCuttingBoard,        // 7. Относим помидор на доску 
         ChopTomato,              // 8. Нарезаем помидор на доске
         TakeChoppedTomato,       // 9. Забираем нарезанный помидор
         GoToStove,               // 10. Кладем вариться суп
@@ -151,7 +151,7 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GoToCuttingBoard:
-                tutorialText.text = "Отнеси сырой поридор к РАЗДЕЛOЧНОМУ СТОЛУ и нажми [E].";
+                tutorialText.text = "Отнеси сырой помидор к РАЗДЕЛOЧНОМУ СТОЛУ и нажми [E].";
                 if (cuttingBoard != null) cuttingBoard.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -192,7 +192,7 @@ public class TutorialManager : MonoBehaviour
 
             // --- ЭТАП КАРТОШКИ ---
             case TutorialStep.GrabDirtyPlate2:
-                tutorialText.text = "Первое блюдо сдано! Теперь приготовим картошель фри.\n\nПоскольку чистых тарелок снова нет, подойди к столу грязной посуды и возьми ВТОРУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
+                tutorialText.text = "Первое блюдо сдано! Теперь приготовим картофель фри.\n\nПоскольку чистых тарелок снова нет, подойди к столу грязной посуды и возьми ВТОРУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
                 if (dirtyPlateTable != null) dirtyPlateTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -217,7 +217,7 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GrabPotato:
-                tutorialText.text = "Посуда готова. Теперь займемся картошкой фри!\n\nПодойди к КОРОВКЕ С КАРТОФЕЛЕМ и возьми одну на [E].";
+                tutorialText.text = "Посуда готова. Теперь займемся картошкой фри!\n\nПодойди к КОРОБКЕ С КАРТОФЕЛЕМ и возьми одну на [E].";
                 if (potatoContainer != null) potatoContainer.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -232,12 +232,12 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GoToPan:
-                tutorialText.text = "Положи нарезанный картофель к СКОЛОВОРОДКЕ вариться на кнопку [E].";
+                tutorialText.text = "Положи нарезанный картофель к СКОВОРОДКЕ жариться на кнопку [E].";
                 if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.WaitForFries:
-                tutorialText.text = "Картошель фри жарится автоматически.\n\nВнимание: у тебя снова будет всего 8 секунд до того, как картошка СГОРИТ на сковороде! Ждем готовности...";
+                tutorialText.text = "Картофель фри жарится автоматически.\n\nВнимание: у тебя снова будет всего 8 секунд до того, как картошка СГОРИТ на сковороде! Ждем готовности...";
                 if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -247,7 +247,7 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.PlateFries:
-                tutorialText.text = "А теперь быстро подойди к сковороде и нажми [E], чтобы положить картошель фри в тарелку, пока он не сгорел!";
+                tutorialText.text = "А теперь быстро подойди к сковороде и нажми [E], чтобы положить картофель фри в тарелку, пока он не сгорел!";
                 if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -411,7 +411,7 @@ public class TutorialManager : MonoBehaviour
             case TutorialStep.GrabPotato:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == potatoRawSO)
                 {
-                    SetStep(TutorialStep.GoToCuttingBoard); // Используем правильный шаг
+                    SetStep(TutorialStep.ChopPotato); // ИСПРАВЛЕНО
                 }
                 break;
 

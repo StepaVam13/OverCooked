@@ -9,27 +9,31 @@ public class Shop3DManager : MonoBehaviour
     public class HoverboardItem
     {
         public string boardName;
-        public GameObject modelObject; // 3D модель этого гироскутера на этой сцене
+        public GameObject modelObject;
         public int price;
-        public float speed = 7f;       // Скорость этого гироскутера в игре
-        public float acceleration = 5f; // Разгон этого гироскутера в игре
-        public string boardID;         // Уникальный ID (например: "Default", "Speedster", "Drifter")
+        public float speed = 7f;
+        public float acceleration = 5f;
+        public string boardID;
     }
 
     [Header("Список гироскутеров")]
     [SerializeField] private List<HoverboardItem> shopItems;
-    [SerializeField] private Transform rotationPlatform; // Вращающаяся подставка
+    [SerializeField] private Transform rotationPlatform;
 
     [Header("UI Элементы сцены")]
     [SerializeField] private Text globalMoneyText;
     [SerializeField] private Text boardNameText;
     [SerializeField] private Text statsText;
-    [SerializeField] private Button actionButton; // Кнопка КУПИТЬ / ВЫБРАТЬ
+    [SerializeField] private Button actionButton;
     [SerializeField] private Text actionButtonText;
 
-    [SerializeField] private float modelYOffset = 0.2f; // Высота гироскутера над подиумом
+    [Header("UI Выбора игрока в магазине")]
+    [SerializeField] private Text playerSelectionText; // Текст "НАСТРОЙКА: ИГРОК 1"
+
+    [SerializeField] private float modelYOffset = 2.5f; // Высота гироскутера над подиумом (верните сюда ваши 2.5)
 
     private int currentIndex = 0;
+    private string playerPrefix = "P1_"; // По умолчанию настраиваем Первого игрока
 
     private void Start()
     {
@@ -37,16 +41,33 @@ public class Shop3DManager : MonoBehaviour
         UpdateShopScene();
     }
 
-    // Кнопка стрелочки Вправо
+    // Метод для переключения магазина между Игроком 1 и Игроком 2
+    public void TogglePlayerShop()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+        if (playerPrefix == "P1_")
+        {
+            playerPrefix = "P2_";
+            playerSelectionText.text = "НАСТРОЙКА: ИГРОК 2";
+        }
+        else
+        {
+            playerPrefix = "P1_";
+            playerSelectionText.text = "НАСТРОЙКА: ИГРОК 1";
+        }
+        UpdateShopScene();
+    }
+
     public void NextItem()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         currentIndex = (currentIndex + 1) % shopItems.Count;
         UpdateShopScene();
     }
 
-    // Кнопка стрелочки Влево
     public void PreviousItem()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         currentIndex--;
         if (currentIndex < 0) currentIndex = shopItems.Count - 1;
         UpdateShopScene();
@@ -54,23 +75,32 @@ public class Shop3DManager : MonoBehaviour
 
     private void UpdateShopScene()
     {
+        if (globalMoneyText == null || rotationPlatform == null || boardNameText == null || statsText == null || actionButton == null || actionButtonText == null || playerSelectionText == null)
+        {
+            Debug.LogError("КРИТИЧЕСКАЯ ОШИБКА: Одно или несколько UI-полей не привязаны в инспекторе Shop3DManager!");
+            return;
+        }
+
         int globalMoney = PlayerPrefs.GetInt("GlobalMoney", 0);
         globalMoneyText.text = $"БАЛАНС: {globalMoney}$";
 
-        // Сбрасываем вращение платформы при переключении, чтобы новый гироскутер стоял ровно
         rotationPlatform.rotation = Quaternion.identity;
 
-        // Включаем модель только выбранного гироскутера и привязываем его к платформе вращения
         for (int i = 0; i < shopItems.Count; i++)
         {
+            if (shopItems[i].modelObject == null)
+            {
+                Debug.LogError($"КРИТИЧЕСКАЯ ОШИБКА: У элемента {i} не привязана 3D-модель!");
+                return;
+            }
+
             bool isActive = (i == currentIndex);
             shopItems[i].modelObject.SetActive(isActive);
 
             if (isActive)
             {
                 shopItems[i].modelObject.transform.parent = rotationPlatform;
-                shopItems[i].modelObject.transform.localPosition = new Vector3(0f, modelYOffset, 0f);
-                
+                shopItems[i].modelObject.transform.localPosition = new Vector3(0f, modelYOffset, 0f); // Используем отступ по высоте
             }
         }
 
@@ -78,12 +108,11 @@ public class Shop3DManager : MonoBehaviour
         boardNameText.text = currentItem.boardName;
         statsText.text = $"СКОРОСТЬ: {currentItem.speed}\nРАЗГОН: {currentItem.acceleration}";
 
-        // Проверяем статус гироскутера (Куплен / Экипирован / Закрыт)
-        string equippedBoard = PlayerPrefs.GetString("EquippedBoard", "Default");
+        // Проверяем статус гироскутера под конкретного игрока (используем playerPrefix!)
+        string equippedBoard = PlayerPrefs.GetString(playerPrefix + "EquippedBoard", "Default");
 
         if (currentItem.boardID == "Default")
         {
-            // Стартовый гироскутер всегда куплен
             if (equippedBoard == "Default")
             {
                 actionButtonText.text = "ЭКИПИРОВАНО";
@@ -97,8 +126,8 @@ public class Shop3DManager : MonoBehaviour
         }
         else
         {
-            // Для покупных проверяем статус владения в памяти
-            bool isPurchased = PlayerPrefs.GetInt("Bought_" + currentItem.boardID, 0) == 1;
+            // Проверяем покупку с учетом префикса игрока (у каждого свой кошелек покупок!)
+            bool isPurchased = PlayerPrefs.GetInt(playerPrefix + "Bought_" + currentItem.boardID, 0) == 1;
 
             if (isPurchased)
             {
@@ -116,29 +145,29 @@ public class Shop3DManager : MonoBehaviour
             else
             {
                 actionButtonText.text = $"КУПИТЬ ({currentItem.price}$)";
-                // Кнопка покупки активна только если хватает денег в кошельке
                 actionButton.interactable = globalMoney >= currentItem.price;
             }
         }
     }
 
-    // Событие при нажатии на главную кнопку действия (Купить или Экипировать)
     public void OnActionButtonClick()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         HoverboardItem currentItem = shopItems[currentIndex];
         int globalMoney = PlayerPrefs.GetInt("GlobalMoney", 0);
+        string equippedBoard = PlayerPrefs.GetString(playerPrefix + "EquippedBoard", "Default");
 
         if (currentItem.boardID == "Default")
         {
-            PlayerPrefs.SetString("EquippedBoard", "Default");
+            PlayerPrefs.SetString(playerPrefix + "EquippedBoard", "Default");
         }
         else
         {
-            bool isPurchased = PlayerPrefs.GetInt("Bought_" + currentItem.boardID, 0) == 1;
+            bool isPurchased = PlayerPrefs.GetInt(playerPrefix + "Bought_" + currentItem.boardID, 0) == 1;
 
             if (isPurchased)
             {
-                PlayerPrefs.SetString("EquippedBoard", currentItem.boardID);
+                PlayerPrefs.SetString(playerPrefix + "EquippedBoard", currentItem.boardID);
             }
             else
             {
@@ -146,8 +175,8 @@ public class Shop3DManager : MonoBehaviour
                 {
                     globalMoney -= currentItem.price;
                     PlayerPrefs.SetInt("GlobalMoney", globalMoney);
-                    PlayerPrefs.SetInt("Bought_" + currentItem.boardID, 1);
-                    PlayerPrefs.SetString("EquippedBoard", currentItem.boardID);
+                    PlayerPrefs.SetInt(playerPrefix + "Bought_" + currentItem.boardID, 1);
+                    PlayerPrefs.SetString(playerPrefix + "EquippedBoard", currentItem.boardID);
                 }
             }
         }
@@ -158,6 +187,7 @@ public class Shop3DManager : MonoBehaviour
 
     public void BackToMenu()
     {
-        SceneManager.LoadScene(0); // Возврат в Главное меню
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+        SceneManager.LoadScene(0);
     }
 }

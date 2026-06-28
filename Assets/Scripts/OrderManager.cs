@@ -62,6 +62,8 @@ public class OrderManager : MonoBehaviour
                 // Заказ просрочен!
                 Debug.Log($"Заказ {activeOrders[i].recipe.recipeName} просрочен!");
 
+                SoundManager.Instance.PlayFailSound();
+
                 // Вычитаем штраф через LevelManager
                 if (LevelManager.Instance != null)
                 {
@@ -99,7 +101,7 @@ public class OrderManager : MonoBehaviour
         {
             // Показываем игроку, сколько секунд осталось на выполнение этого заказа
             int remainingTime = Mathf.CeilToInt(orderTimeoutMax - order.timer);
-            orderTextUI.text += $"- {order.recipe.recipeName} (осталось {remainingTime}с)\n";
+            orderTextUI.text += $"- {order.recipe.recipeName} ({remainingTime}с)\n";
         }
     }
 

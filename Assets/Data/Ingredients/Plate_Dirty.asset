@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Plate_Dirty
   m_EditorClassIdentifier: 
   objectName: PlateDirty
-  prefab: {fileID: 6502267248863855591, guid: 7c53a0d1657a8ff4b89e5f44c3c0b0c3, type: 3}
+  prefab: {fileID: 930700218827948829, guid: 7c53a0d1657a8ff4b89e5f44c3c0b0c3, type: 3}
   icon: {fileID: 0}

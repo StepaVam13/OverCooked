@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Potato_Raw
   m_EditorClassIdentifier: 
   objectName: Potato
-  prefab: {fileID: 1489369028164219545, guid: a7b9705dbe1b3c94fa2f7583f94c41ef, type: 3}
+  prefab: {fileID: 4144674543332834361, guid: a7b9705dbe1b3c94fa2f7583f94c41ef, type: 3}
   icon: {fileID: 0}

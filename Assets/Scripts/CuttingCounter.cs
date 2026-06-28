@@ -57,6 +57,7 @@ public class CuttingCounter : MonoBehaviour, IInteractable
         {
             currentProgress++;
             CuttingRecipeSO recipe = GetRecipeWithInput(currentObjectOnTable.GetKitchenObjectSO());
+            SoundManager.Instance.PlayChopSound(transform.position);
 
             // Если нарезали до конца
             if (currentProgress >= recipe.maxProgressSteps)

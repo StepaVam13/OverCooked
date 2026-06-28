@@ -8,6 +8,11 @@ public class StoveCounter : MonoBehaviour, IInteractable
     [Header("Параметры сгорания еды")]
     [SerializeField] private KitchenObjectSO burntFoodSO; // Карточка сгоревшей еды (угли)
     [SerializeField] private float burningTimeMax = 8f;   // Время до сгорания после готовности (секунды)
+    [SerializeField] private float shakeTimeBeforeBurnt = 4f; // За сколько секунд до сгорания начнется тряска кастрюли
+    [Header("Визуал огня плиты")]
+    [SerializeField] private GameObject cookingFlameVisual; // Физический объект пламени под кастрюлей/сковородой
+
+
 
     private KitchenObject currentObjectOnTable;
     private float cookingTimer = 0f;
@@ -15,6 +20,11 @@ public class StoveCounter : MonoBehaviour, IInteractable
     private bool isCooking = false;
     private bool isCookedAndWaiting = false; // Еда готова, но её не забирают
     private CookingRecipeSO activeRecipe;
+
+    private void Start()
+    {
+        UpdateFlameVisual();
+    }
 
     private void Update()
     {
@@ -24,7 +34,7 @@ public class StoveCounter : MonoBehaviour, IInteractable
             cookingTimer += Time.deltaTime;
             if (cookingTimer >= activeRecipe.cookingTimeMax)
             {
-                // Приготовилось! Заменяем сырое на готовое блюдо (суп или картофель фри)
+                // Приготовилось! Заменяем сырое на готовое блюдо
                 Destroy(currentObjectOnTable.gameObject);
 
                 GameObject cookedObject = Instantiate(activeRecipe.output.prefab, tablePoint.position, Quaternion.identity);
@@ -43,22 +53,28 @@ public class StoveCounter : MonoBehaviour, IInteractable
         }
 
         // 2. Процесс сгорания готового блюда, если его долго не забирают
-        // 2. Процесс сгорания готового блюда, если его долго не забирают
         if (isCookedAndWaiting && currentObjectOnTable != null)
         {
             burningTimer += Time.deltaTime;
 
-            // Визуальный эффект: трясем кастрюлю строго НАД плитой (tablePoint.position)
-            if (burningTimer >= burningTimeMax * 0.6f)
+            // Вычисляем, сколько секунд ОСТАЛОСЬ до сгорания еды
+            float timeRemaining = burningTimeMax - burningTimer;
+
+            // Если до сгорания осталось меньше времени, чем указано в shakeTimeBeforeBurnt — трясем!
+            if (timeRemaining <= shakeTimeBeforeBurnt)
             {
                 float shakeAmount = 0.03f; // Сила тряски
 
-                // Трясем еду относительно мировых координат плиты, а не центра карты!
                 currentObjectOnTable.transform.position = tablePoint.position + new Vector3(
                     Random.Range(-shakeAmount, shakeAmount),
                     0f,
                     Random.Range(-shakeAmount, shakeAmount)
                 );
+
+                if (Mathf.Repeat(burningTimer, 0.5f) < Time.deltaTime)
+                {
+                    SoundManager.Instance.PlayWarningSound(transform.position);
+                }
             }
 
             // Время вышло — еда превращается в угли
@@ -71,7 +87,7 @@ public class StoveCounter : MonoBehaviour, IInteractable
                 currentObjectOnTable = burntObject.GetComponent<KitchenObject>();
                 currentObjectOnTable.ResetScale();
 
-                // Отключаем коллайдер углям, чтобы они не мешали лучу игрока
+                // Отключаем коллайдер углям
                 Collider col = burntObject.GetComponent<Collider>();
                 if (col != null) col.enabled = false;
 
@@ -79,7 +95,11 @@ public class StoveCounter : MonoBehaviour, IInteractable
                 Debug.LogWarning("Еда на плите сгорела и превратилась в угли!");
             }
         }
+
+        UpdateFlameVisual();
     }
+
+    
 
     public void Interact(PlayerController player)
     {
@@ -145,5 +165,16 @@ public class StoveCounter : MonoBehaviour, IInteractable
             if (recipe.input == inputSO) return recipe;
         }
         return null;
+    }
+
+    private void UpdateFlameVisual()
+    {
+        if (cookingFlameVisual != null)
+        {
+            // Огонь горит, только если идет активная готовка (isCooking) 
+            // ИЛИ если еда уже сварилась, но еще горячая и ждет на плите (isCookedAndWaiting)
+            bool shouldBurn = isCooking || isCookedAndWaiting;
+            cookingFlameVisual.SetActive(shouldBurn);
+        }
     }
 }

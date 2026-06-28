@@ -32,6 +32,8 @@ public class DeliveryCounter : MonoBehaviour, IInteractable
                     Destroy(plate.gameObject);
                     player.ClearKitchenObject();
 
+                    SoundManager.Instance.PlaySuccessSound();
+
                     if (dirtyPlateReturnCounter != null)
                     {
                         dirtyPlateReturnCounter.SpawnDirtyPlate();

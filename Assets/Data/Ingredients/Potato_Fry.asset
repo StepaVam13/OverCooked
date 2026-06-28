@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Potato_Fry
   m_EditorClassIdentifier: 
   objectName: PotatoFry
-  prefab: {fileID: 6270212741324866891, guid: 4da55c979c18f1745b75d30b9807fc4d, type: 3}
+  prefab: {fileID: 3502427319648921625, guid: 4da55c979c18f1745b75d30b9807fc4d, type: 3}
   icon: {fileID: 0}

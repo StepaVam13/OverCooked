@@ -15,6 +15,7 @@ public class LevelManager : MonoBehaviour
     [SerializeField] private Text moneyText;
     [SerializeField] private GameObject endLevelUI;    // Панель конца игры (Win/Lose)
     [SerializeField] private Text endLevelResultText;  // Текст Победа/Поражение
+    [SerializeField] private GameObject nextLevelButton; // Ссылка на кнопку "Следующий уровень" на панели
 
     private float currentTimer;
     private int currentMoney = 0;
@@ -76,37 +77,83 @@ public class LevelManager : MonoBehaviour
         Time.timeScale = 0f; // Замораживаем игру
         endLevelUI.SetActive(true);
 
+        // Останавливаем фоновую музыку
+        if (SoundManager.Instance != null)
+        {
+            SoundManager.Instance.StopMusic();
+        }
+
         if (currentMoney >= targetMoney)
         {
-            // Считаем сдачу (всё, что заработано сверх цели)
+            // --- ПОБЕДА ---
             int excessMoney = currentMoney - targetMoney;
 
-            // Сохраняем эти деньги в глобальный кошелек на компьютере
             int globalMoney = PlayerPrefs.GetInt("GlobalMoney", 0);
             globalMoney += excessMoney;
             PlayerPrefs.SetInt("GlobalMoney", globalMoney);
+
+            int currentSceneIndex = SceneManager.GetActiveScene().buildIndex;
+            int nextLevelIndex = currentSceneIndex + 1;
+
+            int unlockedLevel = PlayerPrefs.GetInt("UnlockedLevel", 1);
+            if (nextLevelIndex > unlockedLevel)
+            {
+                PlayerPrefs.SetInt("UnlockedLevel", nextLevelIndex);
+            }
+
             PlayerPrefs.Save();
 
-            endLevelResultText.text = $"ПОБЕДА!\nВы набрали: {currentMoney}$\nВ глобальный кошелек добавлено: +{excessMoney}$!";
+            endLevelResultText.text = $"ПОБЕДА!\nВы набрали: {currentMoney}$\nВ кошелек добавлено: +{excessMoney}$!";
             endLevelResultText.color = Color.green;
+
+            // ВКЛЮЧАЕМ кнопку "Следующий уровень" только при победе!
+            if (nextLevelButton != null) nextLevelButton.SetActive(true);
         }
         else
         {
+            // --- ПОРАЖЕНИЕ ---
             endLevelResultText.text = $"ПОРАЖЕНИЕ!\nВы набрали только: {currentMoney}$";
             endLevelResultText.color = Color.red;
+
+            // ВЫКЛЮЧАЕМ кнопку "Следующий уровень" при поражении!
+            if (nextLevelButton != null) nextLevelButton.SetActive(false);
         }
     }
 
-    // Методы для кнопок на экране конца игры
+    // Кнопка: Следующий уровень (на экране победы)
     public void RestartLevel()
     {
+        // ДОБАВЬТЕ ЭТУ СТРОКУ:
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+
         Time.timeScale = 1f;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
 
     public void QuitToMenu()
     {
+        // ДОБАВЬТЕ ЭТУ СТРОКУ:
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+
         Time.timeScale = 1f;
-        SceneManager.LoadScene(0); // Переход в Главное меню
+        SceneManager.LoadScene(0);
+    }
+
+    public void LoadNextLevel()
+    {
+        // ДОБАВЬТЕ ЭТУ СТРОКУ:
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+
+        Time.timeScale = 1f;
+        int nextSceneIndex = SceneManager.GetActiveScene().buildIndex + 1;
+
+        if (nextSceneIndex <= 5)
+        {
+            SceneManager.LoadScene(nextSceneIndex);
+        }
+        else
+        {
+            SceneManager.LoadScene(0);
+        }
     }
 }

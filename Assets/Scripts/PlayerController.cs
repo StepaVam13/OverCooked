@@ -120,6 +120,11 @@ public class PlayerController : MonoBehaviour
             if (selectedCounter != null)
             {
                 selectedCounter.Interact(this);
+
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlayInteractSound(transform.position);
+                }
             }
             else
             {
@@ -271,6 +276,12 @@ public class PlayerController : MonoBehaviour
                 if (collider != null) collider.enabled = false;
 
                 SetKitchenObject(kitchenObject);
+
+                if (SoundManager.Instance != null)
+                {
+                    SoundManager.Instance.PlayInteractSound(transform.position);
+                }
+
                 Debug.Log($"Подобрали {kitchenObject.GetKitchenObjectSO().objectName} с пола по близости!");
                 break;
             }
@@ -294,20 +305,22 @@ public class PlayerController : MonoBehaviour
 
     public void LoadUpgrades()
     {
-        // Считываем, какой гироскутер сейчас экипирован в магазине
-        string equippedBoard = PlayerPrefs.GetString("EquippedBoard", "Default");
+        // Считываем префикс конкретного игрока ("P1_" или "P2_") на основе его имени на сцене
+        string prefix = gameObject.name == "Player1" ? "P1_" : "P2_";
 
-        // 1. АКТИВИРУЕМ ТОЛЬКО КУПЛЕННУЮ МОДЕЛЬ под ногами у игрока!
+        // Считываем, какой гироскутер экипирован у ЭТОГО игрока
+        string equippedBoard = PlayerPrefs.GetString(prefix + "EquippedBoard", "Default");
+
+        // 1. Активируем нужный визуал гироскутера под ногами!
         if (gyroScooterContainer != null)
         {
             foreach (Transform child in gyroScooterContainer)
             {
-                // Если имя 3D-модели совпадает с ID экипированного гироскутера — включаем её, остальные гасим
                 child.gameObject.SetActive(child.name == equippedBoard);
             }
         }
 
-        // 2. УСТАНАВЛИВАЕМ ХАРАКТЕРИСТИКИ ЭТОГО ГИРОСКУТЕРА
+        // 2. Устанавливаем характеристики под этот гироскутер!
         if (equippedBoard == "Default")
         {
             moveSpeed = 7f;
@@ -315,13 +328,13 @@ public class PlayerController : MonoBehaviour
         }
         else if (equippedBoard == "Speedster")
         {
-            moveSpeed = 10f; // Быстрый!
+            moveSpeed = 10f;
             acceleration = 6f;
         }
         else if (equippedBoard == "Drifter")
         {
-            moveSpeed = 8.5f;
-            acceleration = 9f; // С заносом и невероятно резвым стартом!
+            moveSpeed = 12f;
+            acceleration = 9f;
         }
     }
 }

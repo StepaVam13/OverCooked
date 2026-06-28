@@ -24,6 +24,7 @@ public class PauseMenu : MonoBehaviour
 
     public void Resume()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         pauseMenuUI.SetActive(false);
         Time.timeScale = 1f;
         isPaused = false;
@@ -38,6 +39,7 @@ public class PauseMenu : MonoBehaviour
 
     public void Restart()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         Time.timeScale = 1f;
         isPaused = false;
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
@@ -45,6 +47,7 @@ public class PauseMenu : MonoBehaviour
 
     public void LoadMenu()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         Time.timeScale = 1f;
         isPaused = false;
         SceneManager.LoadScene(0);

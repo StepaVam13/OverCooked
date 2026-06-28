@@ -129,4 +129,5 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: c688e703088758444b69529637a16e86, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  dirtyPlateReturnCounter: {fileID: 0}
+  dirtyPlateReturnCounter: {fileID: 4625126704719085943, guid: 3fd1fc95931635d47b0c80427fac5f21, type: 3}
+  dirtyPlateSO: {fileID: 11400000, guid: b72a96aa3687b9c4189ffa9e53677373, type: 2}

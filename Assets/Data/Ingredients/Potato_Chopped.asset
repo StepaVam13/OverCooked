@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Potato_Chopped
   m_EditorClassIdentifier: 
   objectName: PotatoChopped
-  prefab: {fileID: 9009707467027529062, guid: ca3341a46dfe0c4409c31168daf7f81c, type: 3}
+  prefab: {fileID: 6156834741126456460, guid: ca3341a46dfe0c4409c31168daf7f81c, type: 3}
   icon: {fileID: 0}

@@ -1,55 +1,98 @@
 using UnityEngine;
-using UnityEngine.SceneManagement;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement;
 
 public class MainMenu : MonoBehaviour
 {
     [Header("Панели меню для переключения")]
-    [SerializeField] private GameObject mainPanel;      // Кнопки Играть/Настройки/Выход
-    [SerializeField] private GameObject settingsPanel;  // Панель настроек кнопок
-    [SerializeField] private GameObject gameModePanel;  // Панель выбора режима (Соло/Кооп)
+    [SerializeField] private GameObject mainPanel;        // Кнопки Играть/Настройки/Выход
+    [SerializeField] private GameObject settingsPanel;    // Панель настроек кнопок
+    [SerializeField] private GameObject levelSelectPanel; // Панель выбора уровней (Новая!)
+    [SerializeField] private GameObject gameModePanel;    // Панель выбора режима (Соло/Кооп)
+
     [Header("Отображение баланса")]
-    [SerializeField] private Text globalMoneyText; // Текст баланса на главном экране
+    [SerializeField] private Text globalMoneyText;
+
+    [Header("Кнопки выбора уровней (для блокировки)")]
+    [SerializeField] private Button level2Button;
+    [SerializeField] private Button level3Button;
+    [SerializeField] private Button level4Button;
+    [SerializeField] private Button level5Button;
+
+    private int selectedLevelSceneIndex = 1; // Запоминаем выбранный уровень для запуска
 
     private void Start()
     {
         Time.timeScale = 1f;
         if (settingsPanel != null) settingsPanel.SetActive(false);
+        if (levelSelectPanel != null) levelSelectPanel.SetActive(false);
         if (gameModePanel != null) gameModePanel.SetActive(false);
         if (mainPanel != null) mainPanel.SetActive(true);
 
-        // ОБНОВЛЯЕМ БАЛАНС ПРИ СТАРТЕ МЕНЮ
         UpdateGlobalMoneyText();
     }
 
-    // Открыть выбор режима (Один / Вдвоем)
-    public void OpenGameModeSelection()
+    // Кнопка: ИГРАТЬ (теперь открывает панель выбора уровней)
+    public void OpenLevelSelection()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound(); // <--- ДОБАВЬТЕ СЮДА
         if (mainPanel != null) mainPanel.SetActive(false);
-        if (gameModePanel != null) gameModePanel.SetActive(true);
+        if (levelSelectPanel != null) levelSelectPanel.SetActive(true);
+
+        // Проверяем прогресс игрока и блокируем закрытые уровни
+        int unlockedLevel = PlayerPrefs.GetInt("UnlockedLevel", 1); // По умолчанию открыт только 1 уровень
+
+        if (level2Button != null) level2Button.interactable = unlockedLevel >= 2;
+        if (level3Button != null) level3Button.interactable = unlockedLevel >= 3;
+        if (level4Button != null) level4Button.interactable = unlockedLevel >= 4;
+        if (level5Button != null) level5Button.interactable = unlockedLevel >= 5;
     }
 
-    // Вернуться из выбора режима к главным кнопкам
+    public void CloseLevelSelection()
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound(); // <--- ДОБАВЬТЕ СЮДА
+        if (mainPanel != null) mainPanel.SetActive(true);
+        if (levelSelectPanel != null) levelSelectPanel.SetActive(false);
+    }
+
+    // Метод: Игрок выбрал уровень (вызывается кнопками уровней)
+    public void SelectLevel(int sceneIndex)
+    {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound(); // <--- ДОБАВЬТЕ СЮДА
+        selectedLevelSceneIndex = sceneIndex; // Запоминаем сцену
+        levelSelectPanel.SetActive(false);
+        gameModePanel.SetActive(true); // Открываем выбор режима для этого уровня!
+    }
+
     public void CloseGameModeSelection()
     {
-        if (mainPanel != null) mainPanel.SetActive(true);
-        if (gameModePanel != null) gameModePanel.SetActive(false);
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+        gameModePanel.SetActive(false);
+        levelSelectPanel.SetActive(true); // Возвращаемся к выбору уровней
     }
 
-    // Кнопка: Одиночная игра
+    // Запуск Обучения (запускается по имени сцены напрямую)
+    public void PlayTutorial()
+    {
+        
+        SceneManager.LoadScene("TutorialScene");
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+    }
+
     public void PlaySolo()
     {
-        PlayerPrefs.SetInt("IsCoop", 0); // 0 = Соло-режим
+        PlayerPrefs.SetInt("IsCoop", 0); // Соло
         PlayerPrefs.Save();
-        SceneManager.LoadScene(1); // Запуск первого уровня
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+        SceneManager.LoadScene(selectedLevelSceneIndex); // Запуск выбранного уровня
     }
 
-    // Кнопка: Кооператив вдвоем
     public void PlayCoop()
     {
-        PlayerPrefs.SetInt("IsCoop", 1); // 1 = Кооп-режим
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
+        PlayerPrefs.SetInt("IsCoop", 1); // Кооп
         PlayerPrefs.Save();
-        SceneManager.LoadScene(1); // Запуск первого уровня
+        SceneManager.LoadScene(selectedLevelSceneIndex); // Запуск выбранного уровня
     }
 
     public void QuitGame()
@@ -60,22 +103,21 @@ public class MainMenu : MonoBehaviour
 
     public void OpenSettings()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound();
         if (mainPanel != null) mainPanel.SetActive(false);
         if (settingsPanel != null) settingsPanel.SetActive(true);
     }
 
     public void CloseSettings()
     {
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound(); // <--- ДОБАВЬТЕ СЮДА
         if (mainPanel != null) mainPanel.SetActive(true);
         if (settingsPanel != null) settingsPanel.SetActive(false);
     }
 
-    // Метод для открытия 3D-магазина
     public void OpenShopScene()
     {
-        Time.timeScale = 1f; // На всякий случай сбрасываем паузу
-
-        // Загружаем сцену магазина по её точному названию в Unity
+        if (SoundManager.Instance != null) SoundManager.Instance.PlayClickSound(); // <--- ДОБАВЬТЕ СЮДА
         SceneManager.LoadScene("Shop3DScene");
     }
 

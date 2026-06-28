@@ -13,5 +13,5 @@ MonoBehaviour:
   m_Name: Tomato_Chopped
   m_EditorClassIdentifier: 
   objectName: TomatoChopped
-  prefab: {fileID: 3012743335322942481, guid: 21fb796f9e605fa4fbd5ebf5d63c043e, type: 3}
+  prefab: {fileID: 589227186906928832, guid: 21fb796f9e605fa4fbd5ebf5d63c043e, type: 3}
   icon: {fileID: 0}
