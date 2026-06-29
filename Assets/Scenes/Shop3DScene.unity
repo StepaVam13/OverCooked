@@ -1578,13 +1578,13 @@ MonoBehaviour:
     boardID: Default
   - boardName: "\u0421\u043F\u043E\u0440\u0442\u0438\u0432\u043D\u044B\u0439"
     modelObject: {fileID: 910513934}
-    price: 800
+    price: 400
     speed: 10
     acceleration: 6
     boardID: Speedster
   - boardName: "\u0414\u0440\u0438\u0444\u0442\u0435\u0440"
     modelObject: {fileID: 1456234335}
-    price: 2000
+    price: 1000
     speed: 12
     acceleration: 9
     boardID: Drifter

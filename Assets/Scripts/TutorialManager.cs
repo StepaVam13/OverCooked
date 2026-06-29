@@ -22,19 +22,21 @@ public class TutorialManager : MonoBehaviour
         PlateSoup,               // 13. Наливаем суп в тарелку (спасаем от сгорания)
         DeliverSoup,             // 14. Относим суп на выдачу
 
-        GrabDirtyPlate2,         // 15. Берем вторую грязную тарелку
-        PutInSink2,              // 16. Кладем в раковину
-        WashPlate2,              // 17. Моем её
-        TakeCleanPlate2,         // 18. Забираем чистую в руки
-        PlacePlate2,             // 19. Кладем чистую тарелку на стол ожидания
-        GrabPotato,              // 20. Берем картошку
-        ChopPotato,              // 21. Нарезаем картошку на доске
-        TakeChoppedPotato,       // 22. Забираем нарезанную картошку
-        GoToPan,                 // 23. Ставим жариться на сковороду
-        WaitForFries,            // 24. Ждем готовности картофеля фри
-        TakePlateForFries,       // 25. Забираем чистую тарелку со стола ожидания
-        PlateFries,              // 26. Накладываем картофель фри в тарелку
-        DeliverFries,            // 27. Относим картошку на выдачу
+        PowerOutage,             // 15. НОВЫЙ ШАГ: Выключение света и починка щитка!
+
+        GrabDirtyPlate2,         // 16. Берем вторую грязную тарелку
+        PutInSink2,              // 17. Кладем в раковину
+        WashPlate2,              // 18. Моем её
+        TakeCleanPlate2,         // 19. Забираем чистую в руки
+        PlacePlate2,             // 20. Кладем чистую тарелку на стол ожидания
+        GrabPotato,              // 21. Берем картошку
+        ChopPotato,              // 22. Нарезаем картошку на доске
+        TakeChoppedPotato,       // 23. Забираем нарезанную картошку
+        GoToPan,                 // 24. Ставим жариться на сковороду
+        WaitForFries,            // 25. Ждем готовности картофеля фри
+        TakePlateForFries,       // 26. Забираем чистую тарелку со стола ожидания
+        PlateFries,              // 27. Накладываем картофель фри в тарелку
+        DeliverFries,            // 28. Относим картошку на выдачу
         Complete
     }
 
@@ -51,6 +53,7 @@ public class TutorialManager : MonoBehaviour
     [SerializeField] private StoveCounter stove;            // Плита для супа
     [SerializeField] private StoveCounter pan;              // Плита/сковорода для картофеля фри
     [SerializeField] private DeliveryCounter deliveryTable;  // Сдача
+    [SerializeField] private ElectricBoxCounter electricBox; // Электрощиток на стене (НОВОЕ!)
 
     [Header("UI Обучения")]
     [SerializeField] private GameObject tutorialPanel;
@@ -116,6 +119,7 @@ public class TutorialManager : MonoBehaviour
         if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(false);
         if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(false);
         if (deliveryTable != null) deliveryTable.GetComponent<InteractableHighlight>().SetSelected(false);
+        if (electricBox != null) electricBox.GetComponent<InteractableHighlight>().SetSelected(false);
 
         switch (step)
         {
@@ -171,7 +175,7 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.WaitForCook:
-                tutorialText.text = "Суп варится автоматически.\n\nВнимание: когда он сварится, у тебя будет всего 8 секунд до того, как он СГОРИТ! Ждем готовности...";
+                tutorialText.text = "Суп варится автоматически.\n\nВнимание: когда он сварится, у тебя будет всего 20 секунд до того, как он СГОРИТ! Ждем готовности...";
                 if (stove != null) stove.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -190,9 +194,15 @@ public class TutorialManager : MonoBehaviour
                 if (deliveryTable != null) deliveryTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
+            // --- НОВЫЙ ИВЕНТ ЭЛЕКТРИЧЕСТВА ---
+            case TutorialStep.PowerOutage:
+                tutorialText.text = "О НЕТ! На кухне выбило пробки и полностью погас свет!\n\nБыстро доедь на гироскутере к ЭЛЕКТРОЩИТКУ на стене (подсвечен моргающей красной лампой) и нажми [E], чтобы поднять рубильник.";
+                if (electricBox != null) electricBox.GetComponent<InteractableHighlight>().SetSelected(true);
+                break;
+
             // --- ЭТАП КАРТОШКИ ---
             case TutorialStep.GrabDirtyPlate2:
-                tutorialText.text = "Первое блюдо сдано! Теперь приготовим картофель фри.\n\nПоскольку чистых тарелок снова нет, подойди к столу грязной посуды и возьми ВТОРУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
+                tutorialText.text = "Свет снова горит, ура! Теперь приготовим картофель фри.\n\nПоскольку чистых тарелок снова нет, подойди к столу грязной посуды и возьми ВТОРУЮ ГРЯЗНУЮ ТАРЕЛКУ на [E].";
                 if (dirtyPlateTable != null) dirtyPlateTable.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -217,7 +227,7 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GrabPotato:
-                tutorialText.text = "Посуда готова. Теперь займемся картошкой фри!\n\nПодойди к КОРОБКЕ С КАРТОФЕЛЕМ и возьми одну на [E].";
+                tutorialText.text = "Посуда готова. Теперь займемся картошкой фри!\n\nПодойди к КОРОВКЕ С КАРТОФЕЛЕМ и возьми одну на [E].";
                 if (potatoContainer != null) potatoContainer.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -232,12 +242,12 @@ public class TutorialManager : MonoBehaviour
                 break;
 
             case TutorialStep.GoToPan:
-                tutorialText.text = "Положи нарезанный картофель к СКОВОРОДКЕ жариться на кнопку [E].";
+                tutorialText.text = "Положи нарезанный картофель к СКОЛОВОРОДКЕ вариться на кнопку [E].";
                 if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
             case TutorialStep.WaitForFries:
-                tutorialText.text = "Картофель фри жарится автоматически.\n\nВнимание: у тебя снова будет всего 8 секунд до того, как картошка СГОРИТ на сковороде! Ждем готовности...";
+                tutorialText.text = "Картофель фри жарится автоматически.\n\nВнимание: у тебя снова будет всего 20 секунд до того, как картошка СГОРИТ на сковороде! Ждем готовности...";
                 if (pan != null) pan.GetComponent<InteractableHighlight>().SetSelected(true);
                 break;
 
@@ -368,7 +378,22 @@ public class TutorialManager : MonoBehaviour
             case TutorialStep.DeliverSoup:
                 if (!player.HasKitchenObject())
                 {
-                    SetStep(TutorialStep.GrabDirtyPlate2); // Переходим ко второму этапу (картошка)
+                    // ВЫРУБАЕМ СВЕТ ПРИНУДИТЕЛЬНО ровно в секунду сдачи супа!
+                    if (KitchenEventSystem.Instance != null)
+                    {
+                        KitchenEventSystem.Instance.StartDarkEvent();
+                    }
+
+                    SetStep(TutorialStep.PowerOutage); // Переходим к новому шагу с починкой света
+                }
+                break;
+
+            // --- ШАГ ПОЧИНКИ ЭЛЕКТРИЧЕСТВА ---
+            case TutorialStep.PowerOutage:
+                // Ждем, пока игрок доедет до щитка и включит рубильник (IsDark снова станет false)
+                if (KitchenEventSystem.Instance != null && !KitchenEventSystem.Instance.IsDark())
+                {
+                    SetStep(TutorialStep.GrabDirtyPlate2); // После починки света переходим к картошке!
                 }
                 break;
 
@@ -411,7 +436,7 @@ public class TutorialManager : MonoBehaviour
             case TutorialStep.GrabPotato:
                 if (player.HasKitchenObject() && player.GetKitchenObject().GetKitchenObjectSO() == potatoRawSO)
                 {
-                    SetStep(TutorialStep.ChopPotato); // ИСПРАВЛЕНО
+                    SetStep(TutorialStep.ChopPotato);
                 }
                 break;
 
@@ -503,7 +528,7 @@ public class TutorialManager : MonoBehaviour
         isWaitingForContinue = true;
         player.isMovementFrozen = true;
         tutorialPanel.SetActive(true);
-        tutorialText.text = "ПОЗДРАВЛЯЕМ!\n\nТы успешно завершил обучение. Ты освоил все тонкости работы на кухне: от мытья грязной посуды до приготовления и сдачи супа и картофеля фри!\n\nНажми Q для возврата в главное меню.";
+        tutorialText.text = "ПОЗДРАВЛЯЕМ!\n\nТы успешно завершил обучение. Ты освоил все тонкости работы на кухне: от мытья грязной посуды до починки пробок на щитке, приготовления и сдачи супа и картофеля фри!\n\nНажми Q для возврата в главное меню.";
         actionPromptText.text = "Нажми Q для выхода";
     }
 }

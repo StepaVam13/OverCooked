@@ -43,17 +43,15 @@ public class KitchenEventSystem : MonoBehaviour
         }
     }
 
-    private void StartDarkEvent()
+    public void StartDarkEvent()
     {
         isDark = true;
         timer = 0f;
 
         if (directionalLight != null) directionalLight.intensity = darkIntensity;
 
-        // ¬ключаем фару ѕервого игрока
         if (player1Spotlight != null) player1Spotlight.gameObject.SetActive(true);
 
-        // ¬ключаем фару ¬торого игрока, только если он сам сейчас активен на сцене (режим кооператива)
         if (player2Spotlight != null && player2Spotlight.transform.root.gameObject.activeInHierarchy)
         {
             player2Spotlight.gameObject.SetActive(true);
